@@ -166,12 +166,14 @@ class ChatAgent:
             content = content.strip()
             
             parsed = json.loads(content)
-            # If the model uses aliases instead of 'message', fix it
+            
+            # If the model uses a hallucinated key instead of 'message', find the first string value
             if "message" not in parsed:
-                for alias in ["thought", "text", "answer", "response", "explanation", "content", "msg"]:
-                    if alias in parsed:
-                        parsed["message"] = parsed.pop(alias)
+                for key, value in list(parsed.items()):
+                    if key not in ["proposed_commands", "commands"] and isinstance(value, str):
+                        parsed["message"] = parsed.pop(key)
                         break
+                        
                         
             # If the model uses 'commands' instead of 'proposed_commands', fix it
             if "commands" in parsed and "proposed_commands" not in parsed:
