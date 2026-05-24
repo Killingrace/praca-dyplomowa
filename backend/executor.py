@@ -18,7 +18,13 @@ async def execute_commands_interactive(commands: list[str], websocket: WebSocket
         
         # We use a wrapper bash script or just run it directly.
         # running in bash ensures builtins work.
-        child = pexpect.spawn('/bin/bash', ['-c', cmd], encoding='utf-8', timeout=None)
+        import os
+        env = os.environ.copy()
+        env["TERM"] = "dumb"  # Disables colors and complex TTY formatting
+        env["PAGER"] = "cat"  # Disables pagers like less
+        env["SYSTEMD_PAGER"] = "" # Specifically disables systemd's pager
+        
+        child = pexpect.spawn('/bin/bash', ['-c', cmd], encoding='utf-8', timeout=None, env=env)
         
         # We need to concurrently read from the process and read from the websocket.
         # This allows the user to send passwords (like for sudo) or 'y' for apt.

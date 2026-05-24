@@ -24,6 +24,7 @@ function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isThinking, setIsThinking] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [settings, setSettingsState] = useState<SettingsData>({ api_key: '', base_url: '', model: 'gpt-4o-2024-08-06' });
   const [showSettings, setShowSettings] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -209,6 +210,7 @@ function App() {
   const handleExecuteCommands = (commands: string[]) => {
     if (!currentChatId) return;
     setIsExecuting(true);
+    setIsAnalyzing(false);
     
     const logMessageId = Date.now().toString();
     setMessages(prev => [...prev, { id: logMessageId, role: 'system', content: '' }]);
@@ -231,11 +233,15 @@ function App() {
           if (msg.id === logMessageId) {
             let newContent = msg.content + (data.type === 'output' ? data.content : `\n[${data.content}]\n`);
             // Handle carriage returns (progress bars) by replacing everything on the line before \r
-            newContent = newContent.replace(/[^\n]*\r/g, '');
+            newContent = newContent.replace(/[^\n]*\r(?!\n)/g, '');
             return { ...msg, content: newContent };
           }
           return msg;
         }));
+        
+        if (data.type === 'status' && data.content === 'Analyzing logs...') {
+          setIsAnalyzing(true);
+        }
       } else if (data.type === 'analysis') {
         setMessages(prev => [...prev, {
           id: Date.now().toString(),
@@ -248,6 +254,7 @@ function App() {
 
     ws.onclose = () => {
       setIsExecuting(false);
+      setIsAnalyzing(false);
       wsRef.current = null;
     };
   };
@@ -375,7 +382,7 @@ function App() {
         </div>
 
         {/* Dedicated Terminal Input box when executing */}
-        {isExecuting && (
+        {(isExecuting && !isAnalyzing) && (
           <div className="mb-4 bg-black border border-orange-500/50 rounded-lg p-3 shadow-[0_0_15px_rgba(249,115,22,0.15)] flex gap-2 items-center transition-all animate-pulse-glow">
             <span className="text-orange-500 font-bold whitespace-nowrap">&gt;_ Terminal Input:</span>
             <input 
