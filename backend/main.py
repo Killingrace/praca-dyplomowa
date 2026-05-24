@@ -1,11 +1,13 @@
-from fastapi import FastAPI, WebSocket, HTTPException, Depends
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import List, Dict, Any
-from agent import ChatAgent, SettingsManager, get_all_chats
-from executor import execute_commands_interactive
 import json
 import uuid
+from fastapi import FastAPI, WebSocket, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+
+from agent import ChatAgent
+from config import SettingsManager
+from storage import get_all_chats, delete_chat_file
+from schemas import ChatRequest, SettingsRequest, UpdateSummaryRequest
+from executor import execute_commands_interactive
 
 app = FastAPI()
 
@@ -18,14 +20,6 @@ app.add_middleware(
 )
 
 settings_manager = SettingsManager()
-
-class ChatRequest(BaseModel):
-    message: str
-
-class SettingsRequest(BaseModel):
-    api_key: str
-    base_url: str = ""
-    model: str = "gpt-4o-2024-08-06"
 
 @app.get("/api/settings")
 async def get_settings():
@@ -51,15 +45,9 @@ async def create_chat():
     agent = ChatAgent(chat_id, settings_manager)
     return {"chat_id": chat_id, "summary": agent.summary}
 
-class UpdateSummaryRequest(BaseModel):
-    summary: str
-
 @app.delete("/api/chat/{chat_id}")
 async def delete_chat(chat_id: str):
-    import os
-    file_path = f"data/chats/{chat_id}.json"
-    if os.path.exists(file_path):
-        os.remove(file_path)
+    if delete_chat_file(chat_id):
         return {"status": "success"}
     raise HTTPException(status_code=404, detail="Chat not found")
 
