@@ -18,9 +18,10 @@ CRITICAL RULES:
 2. NEVER propose destructive commands like `rm -rf /` or commands that could permanently break the system without extreme caution and explicit warning in your message.
 3. Keep your proposed commands concise and targeted.
 4. When you receive log output (stdout/stderr) from previously executed commands, analyze it carefully. If there was an error, explain what went wrong and propose a fix.
-5. If the user says something like "Don't do X, do Y instead", adapt your plan and propose new commands.
-6. The user may need to run commands with `sudo`. If `sudo` is required, include it in your proposed commands. The backend handles interactive password input securely.
-7. Return your response EXACTLY as a JSON object matching this schema, and NOTHING ELSE:
+5. If the problem is not fully resolved, you MUST propose the next logical bash commands to diagnose or fix it. Do not just ask the user to check things manually—provide the actual commands in the `proposed_commands` list.
+6. If the user says something like "Don't do X, do Y instead", adapt your plan and propose new commands.
+7. The user may need to run commands with `sudo`. If `sudo` is required, include it in your proposed commands. The backend handles interactive password input securely.
+8. Return your response EXACTLY as a JSON object matching this schema, and NOTHING ELSE:
 {
   "message": "The explanation of the situation or analysis of logs.",
   "proposed_commands": ["command 1", "command 2"]
@@ -39,7 +40,7 @@ class SettingsManager:
     def load(self):
         if os.path.exists(self.settings_file):
             try:
-                with open(self.settings_file, "r") as f:
+                with open(self.settings_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     self.api_key = data.get("api_key", "")
                     self.base_url = data.get("base_url", "")
@@ -49,12 +50,12 @@ class SettingsManager:
 
     def save(self):
         try:
-            with open(self.settings_file, "w") as f:
+            with open(self.settings_file, "w", encoding="utf-8") as f:
                 json.dump({
                     "api_key": self.api_key,
                     "base_url": self.base_url,
                     "model": self.model
-                }, f, indent=2)
+                }, f, indent=2, ensure_ascii=False)
         except Exception as e:
             print(f"Error saving settings: {e}")
 
@@ -78,7 +79,7 @@ class ChatAgent:
     def load_data(self):
         if os.path.exists(self.data_file):
             try:
-                with open(self.data_file, "r") as f:
+                with open(self.data_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     self.summary = data.get("summary", self.summary)
                     history = data.get("history", [{"role": "system", "content": SYSTEM_PROMPT}])
@@ -100,11 +101,11 @@ class ChatAgent:
                     break
 
         try:
-            with open(self.data_file, "w") as f:
+            with open(self.data_file, "w", encoding="utf-8") as f:
                 json.dump({
                     "summary": self.summary,
                     "history": self.history
-                }, f, indent=2)
+                }, f, indent=2, ensure_ascii=False)
         except Exception as e:
             print(f"Error saving chat {self.chat_id}: {e}")
 
