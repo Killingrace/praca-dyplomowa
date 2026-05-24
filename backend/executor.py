@@ -57,6 +57,9 @@ async def execute_commands_interactive(commands: list[str], websocket: WebSocket
                             child.send(input_text)
                         elif data.get("type") == "sigint":
                             child.sendcontrol('c')
+                        elif data.get("type") == "sigkill":
+                            import signal
+                            child.kill(signal.SIGKILL)
                     except asyncio.TimeoutError:
                         continue
             except Exception:

@@ -285,6 +285,19 @@ function App() {
     }
   };
 
+  const handleSendSigkill = () => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'sigkill' }));
+      setMessages(prev => {
+        const lastMsg = prev[prev.length - 1];
+        if (lastMsg.role === 'system') {
+          return [...prev.slice(0, -1), { ...lastMsg, content: lastMsg.content + '\n[Killed]\n' }];
+        }
+        return prev;
+      });
+    }
+  };
+
   const handleSaveSettings = async (newSettings: SettingsData) => {
     try {
       await fetch('/api/settings', {
@@ -410,13 +423,22 @@ function App() {
               }}
               autoFocus
             />
-            <button 
-              onClick={handleSendSigint}
-              className="bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-black border border-red-500/50 px-3 py-1 rounded text-xs font-bold transition-colors"
-              title="Send Ctrl+C to terminate the current process"
-            >
-              Ctrl+C
-            </button>
+            <div className="flex gap-1 shrink-0">
+              <button 
+                onClick={handleSendSigint}
+                className="bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-black border border-red-500/50 px-3 py-1 rounded text-xs font-bold transition-colors"
+                title="Send Ctrl+C (SIGINT)"
+              >
+                Ctrl+C
+              </button>
+              <button 
+                onClick={handleSendSigkill}
+                className="bg-red-900/40 text-red-400 hover:bg-red-600 hover:text-white border border-red-700/50 px-2 py-1 rounded text-xs font-bold transition-colors"
+                title="Force Kill (SIGKILL)"
+              >
+                Kill
+              </button>
+            </div>
           </div>
         )}
 
