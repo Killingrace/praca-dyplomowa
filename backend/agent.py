@@ -170,6 +170,10 @@ class ChatAgent:
             if "thought" in parsed and "message" not in parsed:
                 parsed["message"] = parsed.pop("thought")
                 
+            # If the model uses 'commands' instead of 'proposed_commands', fix it
+            if "commands" in parsed and "proposed_commands" not in parsed:
+                parsed["proposed_commands"] = parsed.pop("commands")
+                
             parsed_response = AgentResponse(**parsed)
             self.add_assistant_message(parsed_response.message, parsed_response.proposed_commands)
             return parsed_response
