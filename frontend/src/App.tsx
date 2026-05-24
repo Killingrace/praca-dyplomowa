@@ -272,6 +272,19 @@ function App() {
     }
   };
 
+  const handleSendSigint = () => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'sigint' }));
+      setMessages(prev => {
+        const lastMsg = prev[prev.length - 1];
+        if (lastMsg.role === 'system') {
+          return [...prev.slice(0, -1), { ...lastMsg, content: lastMsg.content + '^C\n' }];
+        }
+        return prev;
+      });
+    }
+  };
+
   const handleSaveSettings = async (newSettings: SettingsData) => {
     try {
       await fetch('/api/settings', {
@@ -397,6 +410,13 @@ function App() {
               }}
               autoFocus
             />
+            <button 
+              onClick={handleSendSigint}
+              className="bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-black border border-red-500/50 px-3 py-1 rounded text-xs font-bold transition-colors"
+              title="Send Ctrl+C to terminate the current process"
+            >
+              Ctrl+C
+            </button>
           </div>
         )}
 
