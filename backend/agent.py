@@ -177,6 +177,11 @@ class ChatAgent:
                 content = content[:-3]
             content = content.strip()
             
+            # Extract JSON to ignore trailing backticks or garbage
+            json_match = re.search(r'(\{.*\}|\[.*\])', content, re.DOTALL)
+            if json_match:
+                content = json_match.group(1)
+            
             try:
                 parsed = json.loads(content)
             except Exception as e:
@@ -186,6 +191,9 @@ class ChatAgent:
             if isinstance(parsed, list):
                 if len(parsed) > 0 and isinstance(parsed[0], dict):
                     parsed = parsed[0]
+                elif all(isinstance(x, str) for x in parsed):
+                    # Model returned just the array of commands directly
+                    parsed = {"message": "Proceeding with the following commands...", "proposed_commands": parsed}
                 else:
                     raise Exception(f"Validation Error: Expected a JSON object, but received an empty or invalid list. Raw output: {raw_content}")
             
