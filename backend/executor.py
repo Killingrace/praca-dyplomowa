@@ -69,8 +69,7 @@ async def execute_commands_interactive(commands: list[str], websocket: WebSocket
             msg = f"\n[Command exited with code {exit_code}]\n"
             full_log += msg
             await websocket.send_json({"type": "output", "content": msg})
-            # Stop execution if a command fails
-            break
+            # Continue execution to gather full diagnostic info even if one command fails
             
     await websocket.send_json({"type": "status", "content": "Execution completed."})
     return full_log
