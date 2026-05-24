@@ -166,10 +166,13 @@ class ChatAgent:
             content = content.strip()
             
             parsed = json.loads(content)
-            # If the model uses 'thought' instead of 'message', fix it
-            if "thought" in parsed and "message" not in parsed:
-                parsed["message"] = parsed.pop("thought")
-                
+            # If the model uses aliases instead of 'message', fix it
+            if "message" not in parsed:
+                for alias in ["thought", "text", "answer", "response", "explanation", "content", "msg"]:
+                    if alias in parsed:
+                        parsed["message"] = parsed.pop(alias)
+                        break
+                        
             # If the model uses 'commands' instead of 'proposed_commands', fix it
             if "commands" in parsed and "proposed_commands" not in parsed:
                 parsed["proposed_commands"] = parsed.pop("commands")
