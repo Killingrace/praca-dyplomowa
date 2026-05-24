@@ -51,6 +51,25 @@ async def create_chat():
     agent = ChatAgent(chat_id, settings_manager)
     return {"chat_id": chat_id, "summary": agent.summary}
 
+class UpdateSummaryRequest(BaseModel):
+    summary: str
+
+@app.delete("/api/chat/{chat_id}")
+async def delete_chat(chat_id: str):
+    import os
+    file_path = f"data/chats/{chat_id}.json"
+    if os.path.exists(file_path):
+        os.remove(file_path)
+        return {"status": "success"}
+    raise HTTPException(status_code=404, detail="Chat not found")
+
+@app.put("/api/chat/{chat_id}/summary")
+async def update_chat_summary(chat_id: str, request: UpdateSummaryRequest):
+    agent = ChatAgent(chat_id, settings_manager)
+    agent.summary = request.summary
+    agent.save_data()
+    return {"status": "success"}
+
 @app.get("/api/chat/{chat_id}/history")
 async def get_history(chat_id: str):
     agent = ChatAgent(chat_id, settings_manager)

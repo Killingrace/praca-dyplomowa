@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Terminal, Settings as SettingsIcon, Plus, MessageSquare } from 'lucide-react';
+import { Terminal, Settings as SettingsIcon, Plus, MessageSquare, Trash2, Edit2, Check, X as XIcon } from 'lucide-react';
 import ChatMessage from './components/ChatMessage';
 import CommandProposal from './components/CommandProposal';
 import ChatInput from './components/ChatInput';
@@ -28,6 +28,9 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   
+  const [editingChatId, setEditingChatId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -120,12 +123,50 @@ function App() {
     }
   };
 
+  const handleDeleteChat = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (!window.confirm("Delete this chat?")) return;
+    try {
+      const res = await fetch(`/api/chat/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        const updated = chats.filter(c => c.id !== id);
+        setChats(updated);
+        if (currentChatId === id) {
+          setCurrentChatId(updated.length > 0 ? updated[updated.length - 1].id : null);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const startRenameChat = (e: React.MouseEvent, chat: ChatSummary) => {
+    e.stopPropagation();
+    setEditingChatId(chat.id);
+    setEditingTitle(chat.summary);
+  };
+
+  const handleRenameSubmit = async (id: string) => {
+    try {
+      const res = await fetch(`/api/chat/${id}/summary`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ summary: editingTitle })
+      });
+      if (res.ok) {
+        setChats(chats.map(c => c.id === id ? { ...c, summary: editingTitle } : c));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    setEditingChatId(null);
+  };
+
   const handleSendMessage = async (text: string) => {
     if (!text.trim() || !settings.api_key) return;
     
     let targetChatId = currentChatId;
     if (!targetChatId) {
-      // Create chat if none exists
       try {
         const res = await fetch('/api/chats', { method: 'POST' });
         const data = await res.json();
@@ -157,7 +198,6 @@ function App() {
         commands: data.proposed_commands
       }]);
       
-      // Refresh chat list to update summary
       refreshChats();
     } catch (err: any) {
       setMessages(prev => [...prev, { id: Date.now().toString(), role: 'system', content: `Error: ${err.message}` }]);
@@ -187,11 +227,15 @@ function App() {
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.type === 'output' || data.type === 'status' || data.type === 'error') {
-        setMessages(prev => prev.map(msg => 
-          msg.id === logMessageId 
-            ? { ...msg, content: msg.content + (data.type === 'output' ? data.content : `\n[${data.content}]\n`) }
-            : msg
-        ));
+        setMessages(prev => prev.map(msg => {
+          if (msg.id === logMessageId) {
+            let newContent = msg.content + (data.type === 'output' ? data.content : `\n[${data.content}]\n`);
+            // Handle carriage returns (progress bars) by replacing everything on the line before \r
+            newContent = newContent.replace(/[^\n]*\r/g, '');
+            return { ...msg, content: newContent };
+          }
+          return msg;
+        }));
       } else if (data.type === 'analysis') {
         setMessages(prev => [...prev, {
           id: Date.now().toString(),
@@ -218,8 +262,6 @@ function App() {
         }
         return prev;
       });
-    } else {
-      handleSendMessage(input);
     }
   };
 
@@ -241,7 +283,7 @@ function App() {
     <div className="flex h-screen w-full bg-black text-terminal-text overflow-hidden">
       
       {/* Sidebar */}
-      <aside className="w-64 border-r border-terminal-dim flex flex-col p-4">
+      <aside className="w-64 border-r border-terminal-dim flex flex-col p-4 bg-black z-10">
         <div className="flex items-center gap-2 text-xl font-bold mb-6 text-terminal-accent">
           <Terminal />
           <span>SysAdmin AI</span>
@@ -256,16 +298,42 @@ function App() {
 
         <div className="flex-1 overflow-y-auto space-y-2 pr-2">
           {chats.map(chat => (
-            <button
+            <div
               key={chat.id}
               onClick={() => setCurrentChatId(chat.id)}
-              className={`flex items-center gap-2 w-full text-left p-2 rounded transition-colors text-sm truncate ${
+              className={`group flex items-center justify-between w-full p-2 rounded transition-colors text-sm cursor-pointer ${
                 currentChatId === chat.id ? 'bg-terminal-accent/20 text-terminal-accent' : 'hover:bg-terminal-dim/20'
               }`}
             >
-              <MessageSquare size={16} className="shrink-0" />
-              <span className="truncate">{chat.summary}</span>
-            </button>
+              {editingChatId === chat.id ? (
+                <div className="flex items-center w-full gap-1" onClick={e => e.stopPropagation()}>
+                  <input
+                    type="text"
+                    value={editingTitle}
+                    onChange={e => setEditingTitle(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') handleRenameSubmit(chat.id);
+                      if (e.key === 'Escape') setEditingChatId(null);
+                    }}
+                    autoFocus
+                    className="flex-1 bg-black border border-terminal-dim focus:border-terminal-accent text-xs p-1 outline-none rounded"
+                  />
+                  <button onClick={() => handleRenameSubmit(chat.id)} className="text-green-500 hover:text-green-400 p-1"><Check size={14} /></button>
+                  <button onClick={() => setEditingChatId(null)} className="text-red-500 hover:text-red-400 p-1"><XIcon size={14} /></button>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 truncate overflow-hidden">
+                    <MessageSquare size={16} className="shrink-0" />
+                    <span className="truncate">{chat.summary}</span>
+                  </div>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2">
+                    <button onClick={(e) => startRenameChat(e, chat)} className="p-1 hover:text-white" title="Rename"><Edit2 size={14} /></button>
+                    <button onClick={(e) => handleDeleteChat(e, chat.id)} className="p-1 hover:text-red-500" title="Delete"><Trash2 size={14} /></button>
+                  </div>
+                </>
+              )}
+            </div>
           ))}
         </div>
 
@@ -278,7 +346,7 @@ function App() {
       </aside>
 
       {/* Main Chat Area */}
-      <main className="flex-1 flex flex-col relative max-w-5xl mx-auto w-full p-4">
+      <main className="flex-1 flex flex-col relative max-w-5xl mx-auto w-full p-4 h-full">
         {showSettings && (
           <Settings initialSettings={settings} onSave={handleSaveSettings} onClose={() => setShowSettings(false)} />
         )}
@@ -306,12 +374,41 @@ function App() {
           <div ref={messagesEndRef} />
         </div>
 
+        {/* Dedicated Terminal Input box when executing */}
+        {isExecuting && (
+          <div className="mb-4 bg-black border border-orange-500/50 rounded-lg p-3 shadow-[0_0_15px_rgba(249,115,22,0.15)] flex gap-2 items-center transition-all animate-pulse-glow">
+            <span className="text-orange-500 font-bold whitespace-nowrap">&gt;_ Terminal Input:</span>
+            <input 
+              type="text"
+              className="flex-1 bg-transparent border-b border-orange-500/30 focus:border-orange-500 outline-none text-orange-200 px-2 py-1 placeholder:text-orange-500/40 font-mono text-sm"
+              placeholder="Enter password or prompt reply here and press Enter..."
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSendInputToProcess(e.currentTarget.value);
+                  e.currentTarget.value = '';
+                }
+              }}
+              autoFocus
+            />
+          </div>
+        )}
+
         <ChatInput 
-          onSend={isExecuting ? handleSendInputToProcess : handleSendMessage} 
-          disabled={isThinking || !settings.api_key} 
-          placeholder={isExecuting ? "Send input to process (e.g. password, y/n)..." : "Describe the problem or refine commands..."}
+          onSend={handleSendMessage} 
+          disabled={isThinking || !settings.api_key || isExecuting} 
+          placeholder={isExecuting ? "Wait for command execution to finish before chatting..." : "Describe the problem or refine commands..."}
         />
       </main>
+
+      <style>{`
+        .animate-pulse-glow {
+          animation: pulse-border 2s infinite;
+        }
+        @keyframes pulse-border {
+          0%, 100% { border-color: rgba(249,115,22,0.3); }
+          50% { border-color: rgba(249,115,22,0.8); }
+        }
+      `}</style>
     </div>
   );
 }

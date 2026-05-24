@@ -15,9 +15,11 @@ interface Props {
 
 const PRESETS = [
   { label: 'Custom', base_url: '', model: '' },
-  { label: 'OpenAI (Default)', base_url: '', model: 'gpt-4o-2024-08-06' },
-  { label: 'Google Gemini', base_url: 'https://generativelanguage.googleapis.com/v1beta/openai/', model: 'gemini-1.5-flash' },
-  { label: 'Groq', base_url: 'https://api.groq.com/openai/v1', model: 'llama3-8b-8192' },
+  { label: 'OpenAI (GPT-4o)', base_url: '', model: 'gpt-4o-2024-08-06' },
+  { label: 'DeepSeek', base_url: 'https://api.deepseek.com/v1', model: 'deepseek-chat' },
+  { label: 'Google Gemini', base_url: 'https://generativelanguage.googleapis.com/v1beta/openai/', model: 'gemini-1.5-pro' },
+  { label: 'OpenRouter (Claude 3.5)', base_url: 'https://openrouter.ai/api/v1', model: 'anthropic/claude-3.5-sonnet' },
+  { label: 'Groq (Llama 3)', base_url: 'https://api.groq.com/openai/v1', model: 'llama3-8b-8192' },
   { label: 'Ollama (Local)', base_url: 'http://localhost:11434/v1', model: 'llama3' }
 ];
 
