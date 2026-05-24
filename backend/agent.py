@@ -154,9 +154,18 @@ class ChatAgent:
         )
         
         content = response.choices[0].message.content
+        
+        print(f"\n--- RAW LLM RESPONSE ---\n{content}\n------------------------\n")
+        
         if content:
-            # Strip markdown json block if model returned it
+            raw_content = content
             content = content.strip()
+            
+            # Deepseek outputs <think> blocks even in JSON mode, we must strip them
+            import re
+            content = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL).strip()
+            
+            # Strip markdown json block if model returned it
             if content.startswith("```json"):
                 content = content[7:]
             if content.startswith("```"):
@@ -165,7 +174,10 @@ class ChatAgent:
                 content = content[:-3]
             content = content.strip()
             
-            parsed = json.loads(content)
+            try:
+                parsed = json.loads(content)
+            except Exception as e:
+                raise Exception(f"JSON Parse Error: {str(e)}\nRaw output: {raw_content}")
             
             # If the model uses a hallucinated key instead of 'message', find the first string value
             if "message" not in parsed:
@@ -179,11 +191,15 @@ class ChatAgent:
             if "commands" in parsed and "proposed_commands" not in parsed:
                 parsed["proposed_commands"] = parsed.pop("commands")
                 
-            parsed_response = AgentResponse(**parsed)
+            try:
+                parsed_response = AgentResponse(**parsed)
+            except Exception as e:
+                raise Exception(f"Validation Error: {str(e)}\nParsed JSON: {json.dumps(parsed)}")
+                
             self.add_assistant_message(parsed_response.message, parsed_response.proposed_commands)
             return parsed_response
         else:
-            raise Exception("Failed to parse LLM response")
+            raise Exception("LLM returned an empty response.")
 
 def get_all_chats():
     chat_files = glob.glob("data/chats/*.json")
