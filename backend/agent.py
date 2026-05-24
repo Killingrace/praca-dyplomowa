@@ -157,13 +157,16 @@ class ChatAgent:
         
         print(f"\n--- RAW LLM RESPONSE ---\n{content}\n------------------------\n")
         
-        if content:
+        if content and content.strip():
             raw_content = content
             content = content.strip()
             
             # Deepseek outputs <think> blocks even in JSON mode, we must strip them
             import re
             content = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL).strip()
+            
+            if not content:
+                raise Exception("The AI model returned an empty response (or only hidden <think> blocks). Please try sending your message again.")
             
             # Strip markdown json block if model returned it
             if content.startswith("```json"):
@@ -178,6 +181,13 @@ class ChatAgent:
                 parsed = json.loads(content)
             except Exception as e:
                 raise Exception(f"JSON Parse Error: {str(e)}\nRaw output: {raw_content}")
+                
+            # If the model returns a list of objects (e.g., [ {...} ]), extract the first one
+            if isinstance(parsed, list):
+                if len(parsed) > 0 and isinstance(parsed[0], dict):
+                    parsed = parsed[0]
+                else:
+                    raise Exception(f"Validation Error: Expected a JSON object, but received an empty or invalid list. Raw output: {raw_content}")
             
             # If the model uses a hallucinated key instead of 'message', find the first string value
             if "message" not in parsed:
