@@ -7,13 +7,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        'terminal-bg': '#0a0a0a',
-        'terminal-text': '#00ff00',
-        'terminal-dim': '#008800',
-        'terminal-accent': '#00cc00',
+        'chat-bg': 'var(--chat-bg)',
+        'chat-surface': 'var(--chat-surface)',
+        'chat-border': 'var(--chat-border)',
+        'chat-accent': 'var(--chat-accent)',
+        'chat-accent-hover': 'var(--chat-accent-hover)',
+        'chat-text-primary': 'var(--chat-text-primary)',
+        'chat-text-secondary': 'var(--chat-text-secondary)',
       },
       fontFamily: {
-        mono: ['"Fira Code"', '"JetBrains Mono"', 'monospace'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', "Liberation Mono", "Courier New", 'monospace'],
+        sans: ['ui-sans-serif', 'system-ui', 'sans-serif'],
       }
     },
   },

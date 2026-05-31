@@ -32,16 +32,16 @@ export default function ChatInput({ onSend, disabled, placeholder = "Type a mess
         onKeyDown={handleKeyDown}
         disabled={disabled}
         placeholder={placeholder}
-        className="w-full bg-terminal-bg border border-terminal-dim focus:border-terminal-accent focus:ring-1 focus:ring-terminal-accent rounded-lg p-4 pr-14 resize-none outline-none transition-all placeholder:text-terminal-dim/50"
+        className="w-full bg-chat-surface border border-chat-border focus:border-chat-accent focus:ring-1 focus:ring-chat-accent rounded-3xl p-5 pr-14 resize-none outline-none transition-all duration-300 placeholder:text-chat-text-secondary/50 text-chat-text-primary shadow-lg"
         rows={3}
       />
       <button
         onClick={handleSend}
         disabled={disabled || !text.trim()}
-        className={`absolute bottom-4 right-4 p-2 rounded-full transition-colors ${
+        className={`absolute bottom-5 right-5 p-2 rounded-full transition-all duration-300 ${
           disabled || !text.trim() 
-            ? 'text-terminal-dim cursor-not-allowed' 
-            : 'text-terminal-accent hover:bg-terminal-dim/20'
+            ? 'text-chat-text-secondary opacity-50 cursor-not-allowed' 
+            : 'bg-chat-accent text-white hover:bg-chat-accent-hover shadow-md shadow-chat-accent/20'
         }`}
       >
         <Send size={20} />

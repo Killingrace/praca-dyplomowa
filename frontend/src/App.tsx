@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Terminal, Settings as SettingsIcon, Plus, MessageSquare, Trash2, Edit2, Check, X as XIcon } from 'lucide-react';
+import { Terminal, Settings as SettingsIcon, Plus, MessageSquare, Trash2, Edit2, Check, X as XIcon, Sun, Moon } from 'lucide-react';
 import ChatMessage from './components/ChatMessage';
 import CommandProposal from './components/CommandProposal';
 import ChatInput from './components/ChatInput';
@@ -28,6 +28,7 @@ function App() {
   const [settings, setSettingsState] = useState<SettingsData>({ api_key: '', base_url: '', model: 'gpt-4o-2024-08-06' });
   const [showSettings, setShowSettings] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
   
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
@@ -37,6 +38,20 @@ function App() {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
   };
 
   useEffect(() => {
@@ -313,18 +328,18 @@ function App() {
   };
 
   return (
-    <div className="flex h-screen w-full bg-black text-terminal-text overflow-hidden">
+    <div className="flex h-screen w-full bg-chat-bg text-chat-text-primary overflow-hidden font-sans selection:bg-chat-accent/30">
       
       {/* Sidebar */}
-      <aside className="w-64 border-r border-terminal-dim flex flex-col p-4 bg-black z-10">
-        <div className="flex items-center gap-2 text-xl font-bold mb-6 text-terminal-accent">
-          <Terminal />
-          <span>SysAdmin AI</span>
+      <aside className="w-64 border-r border-chat-border flex flex-col p-4 bg-chat-surface z-10 transition-all duration-300">
+        <div className="flex items-center gap-2 text-xl font-bold mb-6 text-chat-accent tracking-wide">
+          <Terminal size={22} />
+          <span>AI HelpDesk</span>
         </div>
         
         <button 
           onClick={handleNewChat}
-          className="flex items-center gap-2 border border-terminal-accent text-terminal-accent p-2 rounded hover:bg-terminal-accent/10 transition-colors mb-4 w-full"
+          className="flex items-center gap-2 bg-chat-accent text-white p-2.5 rounded-xl hover:bg-chat-accent-hover transition-all duration-300 mb-6 w-full shadow-lg shadow-chat-accent/20 font-medium justify-center"
         >
           <Plus size={18} /> New Chat
         </button>
@@ -334,8 +349,8 @@ function App() {
             <div
               key={chat.id}
               onClick={() => setCurrentChatId(chat.id)}
-              className={`group flex items-center justify-between w-full p-2 rounded transition-colors text-sm cursor-pointer ${
-                currentChatId === chat.id ? 'bg-terminal-accent/20 text-terminal-accent' : 'hover:bg-terminal-dim/20'
+              className={`group flex items-center justify-between w-full p-2.5 rounded-xl transition-all duration-300 text-sm cursor-pointer ${
+                currentChatId === chat.id ? 'bg-chat-bg border border-chat-border text-chat-accent shadow-sm' : 'text-chat-text-secondary hover:bg-chat-bg/50 hover:text-chat-text-primary'
               }`}
             >
               {editingChatId === chat.id ? (
@@ -349,10 +364,10 @@ function App() {
                       if (e.key === 'Escape') setEditingChatId(null);
                     }}
                     autoFocus
-                    className="flex-1 bg-black border border-terminal-dim focus:border-terminal-accent text-xs p-1 outline-none rounded"
+                    className="flex-1 bg-chat-bg border border-chat-accent focus:border-chat-accent text-xs p-1 outline-none rounded-lg text-chat-text-primary transition-all duration-300"
                   />
-                  <button onClick={() => handleRenameSubmit(chat.id)} className="text-green-500 hover:text-green-400 p-1"><Check size={14} /></button>
-                  <button onClick={() => setEditingChatId(null)} className="text-red-500 hover:text-red-400 p-1"><XIcon size={14} /></button>
+                  <button onClick={() => handleRenameSubmit(chat.id)} className="text-chat-accent hover:text-chat-accent-hover p-1 transition-colors"><Check size={14} /></button>
+                  <button onClick={() => setEditingChatId(null)} className="text-chat-text-secondary hover:text-red-400 p-1 transition-colors"><XIcon size={14} /></button>
                 </div>
               ) : (
                 <>
@@ -372,7 +387,7 @@ function App() {
 
         <button 
           onClick={() => setShowSettings(true)} 
-          className="flex items-center gap-2 mt-4 p-2 hover:bg-terminal-dim/20 rounded text-sm w-full"
+          className="flex items-center gap-2 mt-4 p-2.5 hover:bg-chat-bg/50 text-chat-text-secondary hover:text-chat-text-primary rounded-xl text-sm w-full transition-all duration-300"
         >
           <SettingsIcon size={18} /> Settings
         </button>
@@ -380,13 +395,21 @@ function App() {
 
       {/* Main Chat Area */}
       <main className="flex-1 flex flex-col relative max-w-5xl mx-auto w-full p-4 h-full">
+        <button
+          onClick={toggleTheme}
+          className="absolute top-4 right-4 z-20 p-2.5 rounded-xl bg-chat-surface border border-chat-border text-chat-text-secondary hover:text-chat-accent hover:border-chat-accent transition-all duration-300 shadow-sm"
+          title="Toggle Theme"
+        >
+          {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
+
         {showSettings && (
           <Settings initialSettings={settings} onSave={handleSaveSettings} onClose={() => setShowSettings(false)} />
         )}
 
-        <div className="flex-1 overflow-y-auto mb-4 border border-terminal-dim/30 p-4 rounded flex flex-col gap-4">
+        <div className="flex-1 overflow-y-auto mb-4 p-4 flex flex-col gap-6 mt-12">
           {messages.length === 0 && (
-            <div className="text-center text-terminal-dim mt-10">
+            <div className="text-center text-chat-text-secondary mt-10 opacity-70">
               System ready. Describe your issue...
             </div>
           )}
@@ -403,17 +426,17 @@ function App() {
               )}
             </div>
           ))}
-          {isThinking && <div className="text-terminal-dim animate-pulse">Agent is thinking...</div>}
+          {isThinking && <div className="text-chat-text-secondary animate-pulse ml-8 flex items-center gap-2"><div className="w-2 h-2 bg-chat-accent rounded-full animate-bounce"></div>Agent is thinking...</div>}
           <div ref={messagesEndRef} />
         </div>
 
         {/* Dedicated Terminal Input box when executing */}
         {(isExecuting && !isAnalyzing) && (
-          <div className="mb-4 bg-black border border-orange-500/50 rounded-lg p-3 shadow-[0_0_15px_rgba(249,115,22,0.15)] flex gap-2 items-center transition-all animate-pulse-glow">
-            <span className="text-orange-500 font-bold whitespace-nowrap">&gt;_ Terminal Input:</span>
+          <div className="mb-4 bg-chat-surface border border-chat-border rounded-2xl p-4 shadow-xl flex flex-col sm:flex-row gap-3 items-center transition-all duration-300 animate-pulse-glow z-20">
+            <span className="text-chat-accent font-bold whitespace-nowrap flex items-center gap-2"><Terminal size={16}/> Input:</span>
             <input 
               type="text"
-              className="flex-1 bg-transparent border-b border-orange-500/30 focus:border-orange-500 outline-none text-orange-200 px-2 py-1 placeholder:text-orange-500/40 font-mono text-sm"
+              className="flex-1 bg-chat-bg border border-chat-border focus:border-chat-accent rounded-xl outline-none text-chat-text-primary px-3 py-2 placeholder:text-chat-text-secondary/50 font-mono text-sm transition-all duration-300 shadow-inner"
               placeholder="Enter password or prompt reply here and press Enter..."
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
@@ -423,17 +446,17 @@ function App() {
               }}
               autoFocus
             />
-            <div className="flex gap-1 shrink-0">
+            <div className="flex gap-2 shrink-0">
               <button 
                 onClick={handleSendSigint}
-                className="bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-black border border-red-500/50 px-3 py-1 rounded text-xs font-bold transition-colors"
+                className="bg-chat-bg text-chat-text-secondary hover:bg-chat-border hover:text-chat-text-primary border border-chat-border px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-300"
                 title="Send Ctrl+C (SIGINT)"
               >
                 Ctrl+C
               </button>
               <button 
                 onClick={handleSendSigkill}
-                className="bg-red-900/40 text-red-400 hover:bg-red-600 hover:text-white border border-red-700/50 px-2 py-1 rounded text-xs font-bold transition-colors"
+                className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/20 hover:border-red-500 px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-300"
                 title="Force Kill (SIGKILL)"
               >
                 Kill
@@ -451,11 +474,11 @@ function App() {
 
       <style>{`
         .animate-pulse-glow {
-          animation: pulse-border 2s infinite;
+          animation: pulse-border 3s ease-in-out infinite;
         }
         @keyframes pulse-border {
-          0%, 100% { border-color: rgba(249,115,22,0.3); }
-          50% { border-color: rgba(249,115,22,0.8); }
+          0%, 100% { border-color: rgba(139,92,246,0.2); box-shadow: 0 0 10px rgba(139,92,246,0.05); }
+          50% { border-color: rgba(139,92,246,0.6); box-shadow: 0 0 20px rgba(139,92,246,0.15); }
         }
       `}</style>
     </div>

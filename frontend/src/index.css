@@ -2,6 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Light Theme */
+  --chat-bg: #f8fafc;
+  --chat-surface: #ffffff;
+  --chat-border: #e2e8f0;
+  --chat-accent: #3b82f6;
+  --chat-accent-hover: #2563eb;
+  --chat-text-primary: #0f172a;
+  --chat-text-secondary: #64748b;
+}
+
+html.dark {
+  /* Dark Theme */
+  --chat-bg: #0f1115;
+  --chat-surface: #1a1d24;
+  --chat-border: #2b2d35;
+  --chat-accent: #8b5cf6;
+  --chat-accent-hover: #a855f7;
+  --chat-text-primary: #f8fafc;
+  --chat-text-secondary: #94a3b8;
+}
+
 body {
   margin: 0;
   display: flex;
@@ -16,17 +38,17 @@ body {
   margin: 0 auto;
 }
 
-/* Custom scrollbar for terminal vibe */
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #0a0a0a;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #008800;
+  background: var(--chat-border);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #00cc00;
+  background: var(--chat-text-secondary);
 }
