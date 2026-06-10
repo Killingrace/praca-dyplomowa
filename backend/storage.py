@@ -39,7 +39,6 @@ def load_chat_data(chat_id: str) -> tuple[str, List[Dict[str, Any]]]:
                 summary = data.get("summary", summary)
                 loaded_history = data.get("history", history)
                 
-                # Force the latest system prompt
                 if loaded_history and loaded_history[0].get("role") == "system":
                     loaded_history[0]["content"] = SYSTEM_PROMPT
                 history = loaded_history

@@ -74,7 +74,7 @@ function App() {
           const data = await chatsRes.json();
           setChats(data.chats);
           if (data.chats.length > 0) {
-            setCurrentChatId(data.chats[data.chats.length - 1].id); // Select latest
+            setCurrentChatId(data.chats[data.chats.length - 1].id);
           }
         }
       } catch (e) {
@@ -88,7 +88,6 @@ function App() {
     loadData();
   }, []);
 
-  // Load chat history when currentChatId changes
   useEffect(() => {
     if (!currentChatId) {
       setMessages([]);
@@ -247,7 +246,6 @@ function App() {
         setMessages(prev => prev.map(msg => {
           if (msg.id === logMessageId) {
             let newContent = msg.content + (data.type === 'output' ? data.content : `\n[${data.content}]\n`);
-            // Handle carriage returns (progress bars) by replacing everything on the line before \r
             newContent = newContent.replace(/[^\n]*\r(?!\n)/g, '');
             return { ...msg, content: newContent };
           }

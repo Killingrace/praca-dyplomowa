@@ -27,7 +27,6 @@ export default function Settings({ initialSettings, onSave, onClose }: Props) {
   const [settings, setSettings] = useState<SettingsData>(initialSettings);
   const [presetIndex, setPresetIndex] = useState<number>(0);
 
-  // Try to match current settings to a preset on load
   useEffect(() => {
     const match = PRESETS.findIndex(
       p => p.base_url === initialSettings.base_url && p.model === initialSettings.model
@@ -39,7 +38,7 @@ export default function Settings({ initialSettings, onSave, onClose }: Props) {
 
   const handleChange = (field: keyof SettingsData, value: string) => {
     setSettings(prev => ({ ...prev, [field]: value }));
-    setPresetIndex(0); // Switch to custom if manually edited
+    setPresetIndex(0);
   };
 
   const applyPreset = (index: number) => {

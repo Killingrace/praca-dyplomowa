@@ -41,7 +41,6 @@ async def list_chats():
 @app.post("/api/chats")
 async def create_chat():
     chat_id = str(uuid.uuid4())
-    # Initialize it to create the file
     agent = ChatAgent(chat_id, settings_manager)
     return {"chat_id": chat_id, "summary": agent.summary}
 
@@ -91,7 +90,6 @@ async def get_history(chat_id: str):
 async def chat(chat_id: str, request: ChatRequest):
     agent = ChatAgent(chat_id, settings_manager)
     
-    # Add user message to history
     agent.add_user_message(request.message)
     
     try:
