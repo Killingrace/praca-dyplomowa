@@ -13,13 +13,11 @@ def _parse_llm_response(raw_content: str) -> AgentResponse:
         
     content = raw_content.strip()
     
-    # Deepseek outputs <think> blocks even in JSON mode, we must strip them
     content = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL).strip()
     
     if not content:
         raise Exception("The AI model returned an empty response (or only hidden <think> blocks). Please try sending your message again.")
     
-    # Extract JSON to ignore trailing backticks or garbage
     json_match = re.search(r'(\{.*\}|\[.*\])', content, re.DOTALL)
     if json_match:
         content = json_match.group(1)
@@ -29,24 +27,20 @@ def _parse_llm_response(raw_content: str) -> AgentResponse:
     except Exception as e:
         raise Exception(f"JSON Parse Error: {str(e)}\nRaw output: {raw_content}")
         
-    # If the model returns a list of objects (e.g., [ {...} ]), extract the first one
     if isinstance(parsed, list):
         if len(parsed) > 0 and isinstance(parsed[0], dict):
             parsed = parsed[0]
         elif all(isinstance(x, str) for x in parsed):
-            # Model returned just the array of commands directly
             parsed = {"message": "Proceeding with the following commands...", "proposed_commands": parsed}
         else:
             raise Exception(f"Validation Error: Expected a JSON object, but received an empty or invalid list. Raw output: {raw_content}")
     
-    # If the model uses a hallucinated key instead of 'message', find the first string value
     if "message" not in parsed:
         for key, value in list(parsed.items()):
             if key not in ["proposed_commands", "commands"] and isinstance(value, str):
                 parsed["message"] = parsed.pop(key)
                 break
                 
-    # If the model uses 'commands' instead of 'proposed_commands', fix it
     if "commands" in parsed and "proposed_commands" not in parsed:
         parsed["proposed_commands"] = parsed.pop("commands")
         
@@ -65,7 +59,6 @@ class ChatAgent:
         self.summary, self.history = load_chat_data(chat_id)
 
     def save_data(self):
-        # Auto-generate summary from first user message if it's default
         if self.summary.startswith("Chat ") and len(self.history) > 1:
             for msg in self.history:
                 if msg["role"] == "user":
