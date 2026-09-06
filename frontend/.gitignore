@@ -15,8 +15,10 @@ node_modules/
 dist/
 dist-ssr/
 build/
+*.tsbuildinfo
 
 # Local env files
+.env
 .env.local
 .env.*.local
 

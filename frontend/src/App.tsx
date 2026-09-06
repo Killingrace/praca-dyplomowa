@@ -4,6 +4,7 @@ import ChatMessage from './components/ChatMessage';
 import CommandProposal from './components/CommandProposal';
 import ChatInput from './components/ChatInput';
 import Settings, { SettingsData } from './components/Settings';
+import { apiUrl, wsUrl } from './config';
 
 export interface Message {
   id: string;
@@ -25,7 +26,7 @@ function App() {
   const [isThinking, setIsThinking] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [settings, setSettingsState] = useState<SettingsData>({ api_key: '', base_url: '', model: 'gpt-4o-2024-08-06' });
+  const [settings, setSettingsState] = useState<SettingsData>({ api_key: '', base_url: '', model: 'gpt-5.6' });
   const [showSettings, setShowSettings] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
@@ -58,8 +59,8 @@ function App() {
     const loadData = async () => {
       try {
         const [settingsRes, chatsRes] = await Promise.all([
-          fetch('/api/settings'),
-          fetch('/api/chats')
+          fetch(apiUrl('/api/settings')),
+          fetch(apiUrl('/api/chats'))
         ]);
         
         if (settingsRes.ok) {
@@ -96,7 +97,7 @@ function App() {
     
     const loadHistory = async () => {
       try {
-        const res = await fetch(`/api/chat/${currentChatId}/history`);
+        const res = await fetch(apiUrl(`/api/chat/${currentChatId}/history`));
         if (res.ok) {
           const data = await res.json();
           setMessages(data.messages);
@@ -117,7 +118,7 @@ function App() {
 
   const refreshChats = async () => {
     try {
-      const res = await fetch('/api/chats');
+      const res = await fetch(apiUrl('/api/chats'));
       if (res.ok) {
         const data = await res.json();
         setChats(data.chats);
@@ -127,7 +128,7 @@ function App() {
 
   const handleNewChat = async () => {
     try {
-      const res = await fetch('/api/chats', { method: 'POST' });
+      const res = await fetch(apiUrl('/api/chats'), { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
         setChats([...chats, { id: data.chat_id, summary: data.summary }]);
@@ -142,7 +143,7 @@ function App() {
     e.stopPropagation();
     if (!window.confirm("Delete this chat?")) return;
     try {
-      const res = await fetch(`/api/chat/${id}`, { method: 'DELETE' });
+      const res = await fetch(apiUrl(`/api/chat/${id}`), { method: 'DELETE' });
       if (res.ok) {
         const updated = chats.filter(c => c.id !== id);
         setChats(updated);
@@ -163,7 +164,7 @@ function App() {
 
   const handleRenameSubmit = async (id: string) => {
     try {
-      const res = await fetch(`/api/chat/${id}/summary`, {
+      const res = await fetch(apiUrl(`/api/chat/${id}/summary`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ summary: editingTitle })
@@ -183,7 +184,7 @@ function App() {
     let targetChatId = currentChatId;
     if (!targetChatId) {
       try {
-        const res = await fetch('/api/chats', { method: 'POST' });
+        const res = await fetch(apiUrl('/api/chats'), { method: 'POST' });
         const data = await res.json();
         targetChatId = data.chat_id;
         setCurrentChatId(targetChatId);
@@ -197,7 +198,7 @@ function App() {
     setIsThinking(true);
 
     try {
-      const res = await fetch(`/api/chat/${targetChatId}`, {
+      const res = await fetch(apiUrl(`/api/chat/${targetChatId}`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text }),
@@ -229,11 +230,7 @@ function App() {
     const logMessageId = Date.now().toString();
     setMessages(prev => [...prev, { id: logMessageId, role: 'system', content: '' }]);
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host || '127.0.0.1:8000';
-    const wsUrl = `${protocol}//${host}/ws/execute/${currentChatId}`;
-    
-    const ws = new WebSocket(wsUrl);
+    const ws = new WebSocket(wsUrl(`/ws/execute/${currentChatId}`));
     wsRef.current = ws;
 
     ws.onopen = () => {
@@ -313,7 +310,7 @@ function App() {
 
   const handleSaveSettings = async (newSettings: SettingsData) => {
     try {
-      await fetch('/api/settings', {
+      await fetch(apiUrl('/api/settings'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newSettings)

@@ -15,12 +15,12 @@ interface Props {
 
 const PRESETS = [
   { label: 'Custom', base_url: '', model: '' },
-  { label: 'OpenAI (GPT-4o)', base_url: '', model: 'gpt-4o-2024-08-06' },
-  { label: 'DeepSeek', base_url: 'https://api.deepseek.com/v1', model: 'deepseek-chat' },
-  { label: 'Google Gemini', base_url: 'https://generativelanguage.googleapis.com/v1beta/openai/', model: 'gemini-1.5-pro' },
-  { label: 'OpenRouter (Claude 3.5)', base_url: 'https://openrouter.ai/api/v1', model: 'anthropic/claude-3.5-sonnet' },
-  { label: 'Groq (Llama 3)', base_url: 'https://api.groq.com/openai/v1', model: 'llama3-8b-8192' },
-  { label: 'Ollama (Local)', base_url: 'http://localhost:11434/v1', model: 'llama3' }
+  { label: 'OpenAI (GPT-5.6)', base_url: '', model: 'gpt-5.6' },
+  { label: 'DeepSeek', base_url: 'https://api.deepseek.com/v1', model: 'deepseek-v4-flash' },
+  { label: 'Google Gemini (3.7 Flash)', base_url: 'https://generativelanguage.googleapis.com/v1beta/openai/', model: 'gemini-3.7-flash' },
+  { label: 'OpenRouter (Claude Sonnet 5)', base_url: 'https://openrouter.ai/api/v1', model: 'anthropic/claude-sonnet-5' },
+  { label: 'Groq (GPT-OSS 120B)', base_url: 'https://api.groq.com/openai/v1', model: 'openai/gpt-oss-120b' },
+  { label: 'Ollama (Local)', base_url: 'http://localhost:11434/v1', model: 'llama3.3' }
 ];
 
 export default function Settings({ initialSettings, onSave, onClose }: Props) {
@@ -113,7 +113,7 @@ export default function Settings({ initialSettings, onSave, onClose }: Props) {
             type="text" 
             value={settings.model}
             onChange={(e) => handleChange('model', e.target.value)}
-            placeholder="gpt-4o-2024-08-06"
+            placeholder="gpt-5.6"
             className="w-full bg-chat-bg border border-chat-border focus:border-chat-accent rounded-xl p-3 outline-none text-chat-text-primary transition-all duration-300 font-mono"
           />
         </div>
